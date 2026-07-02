@@ -8,6 +8,7 @@ from .base import (
     HalfSolver as HalfSolver,
 )
 from .bosh3 import Bosh3 as Bosh3
+from .chain_verlet import ChainVerlet as ChainVerlet
 from .dopri5 import Dopri5 as Dopri5
 from .dopri8 import Dopri8 as Dopri8
 from .euler import Euler as Euler
@@ -21,7 +22,6 @@ from .kvaerno3 import Kvaerno3 as Kvaerno3
 from .kvaerno4 import Kvaerno4 as Kvaerno4
 from .kvaerno5 import Kvaerno5 as Kvaerno5
 from .leapfrog_midpoint import LeapfrogMidpoint as LeapfrogMidpoint
-from .chain_verlet import ChainVerlet as ChainVerlet
 from .metropolis import (
     AbstractMetropolisSolver as AbstractMetropolisSolver,
     ChainLangevin as ChainLangevin,

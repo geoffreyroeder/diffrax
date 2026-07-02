@@ -69,9 +69,9 @@ class ChainVerlet(AbstractSolver):
     """
 
     term_structure: ClassVar = AbstractTerm
-    interpolation_cls: ClassVar[Callable[..., LocalLinearInterpolation]] = (
-        LocalLinearInterpolation
-    )
+    interpolation_cls: ClassVar[
+        Callable[..., LocalLinearInterpolation]
+    ] = LocalLinearInterpolation
 
     coefficients: tuple
 
@@ -97,9 +97,7 @@ class ChainVerlet(AbstractSolver):
         args: Args,
         solver_state: _SolverState,
         made_jump: BoolScalarLike,
-    ) -> tuple[
-        tuple[Ya, tuple], _ErrorEstimate, DenseInfo, _SolverState, RESULTS
-    ]:
+    ) -> tuple[tuple[Ya, tuple], _ErrorEstimate, DenseInfo, _SolverState, RESULTS]:
         del solver_state, made_jump
 
         x0, momenta = y0
@@ -132,8 +130,7 @@ class ChainVerlet(AbstractSolver):
 
         # Second half-kick at the new position.
         p1_full = (
-            new_momenta[0] ** ω
-            + 0.5 * c0 * terms.vf_prod(t1, x1, args, control) ** ω
+            new_momenta[0] ** ω + 0.5 * c0 * terms.vf_prod(t1, x1, args, control) ** ω
         ).ω
         y1 = (x1, (p1_full,) + new_momenta[1:])
 

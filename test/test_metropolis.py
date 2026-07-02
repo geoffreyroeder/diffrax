@@ -186,12 +186,8 @@ def test_mala_chain_moments():
 
     def run_chain(chain_key):
         vbt_key, solver_key = jr.split(chain_key)
-        vbt = VirtualBrownianTree(
-            0.0, n_steps * h, tol=h / 4, shape=(1,), key=vbt_key
-        )
-        terms = MultiTerm(
-            ODETerm(lambda t, y, args: -y), ControlTerm(diffusion, vbt)
-        )
+        vbt = VirtualBrownianTree(0.0, n_steps * h, tol=h / 4, shape=(1,), key=vbt_key)
+        terms = MultiTerm(ODETerm(lambda t, y, args: -y), ControlTerm(diffusion, vbt))
         solver = diffrax.MetropolisHastingsAdjusted(
             diffrax.Euler(), _std_normal_logdensity, key=solver_key
         )
@@ -238,15 +234,9 @@ def test_metropolis_adjusted_acceptance_matches_energy_difference():
             diffrax.VelocityVerlet(), _harmonic_energy, key=key, flip=flip
         )
         state = solver.init(terms, 0.0, h, (x0, p0), None)
-        (xn, pn), _, _, _, _ = solver.step(
-            terms, 0.0, h, (x0, p0), None, state, False
-        )
-        accepted = jnp.allclose(xn, x1, atol=1e-10) & jnp.allclose(
-            pn, p1, atol=1e-10
-        )
-        rejected = jnp.allclose(xn, x0, atol=1e-10) & jnp.allclose(
-            pn, -p0, atol=1e-10
-        )
+        (xn, pn), _, _, _, _ = solver.step(terms, 0.0, h, (x0, p0), None, state, False)
+        accepted = jnp.allclose(xn, x1, atol=1e-10) & jnp.allclose(pn, p1, atol=1e-10)
+        rejected = jnp.allclose(xn, x0, atol=1e-10) & jnp.allclose(pn, -p0, atol=1e-10)
         return accepted, rejected
 
     accepted, rejected = jax.vmap(single_step)(jr.split(jr.PRNGKey(1), 4000))
@@ -354,9 +344,7 @@ def test_ghmc_stationarity_2d():
 
         def body(carry, _):
             y, s = carry
-            y_next, _, _, s_next, _ = solver.step(
-                terms, 0.0, h, y, None, s, False
-            )
+            y_next, _, _, s_next, _ = solver.step(terms, 0.0, h, y, None, s, False)
             return (y_next, s_next), y_next[0]
 
         _, xs = lax.scan(body, (y0, (None, chain_key)), None, length=n_steps)

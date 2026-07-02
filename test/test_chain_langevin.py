@@ -13,8 +13,8 @@ ChainLangevin kernel at K = 3.
 """
 import jax
 import jax.numpy as jnp
-import jax.tree_util as jtu
 import pytest
+
 
 jax.config.update("jax_enable_x64", True)
 
@@ -49,8 +49,9 @@ def _step_chain_verlet(solver, logdensity_fn, y0, h, num_steps=1):
 # ---------------------------------------------------------------------------
 
 
-def _reference_integrate(x, P, logdensity_fn, step_size, num_steps, order,
-                         coefficients=None):
+def _reference_integrate(
+    x, P, logdensity_fn, step_size, num_steps, order, coefficients=None
+):
     if coefficients is None:
         coefficients = jnp.ones(order - 1)
     C = jnp.zeros((order, order))
@@ -121,8 +122,7 @@ def test_chain_verlet_flip_involution(order):
     D, h = 3, 0.25
     x = jax.random.normal(jax.random.key(0), (D,))
     momenta = tuple(
-        0.3 * jax.random.normal(jax.random.key(i + 1), (D,))
-        for i in range(order - 1)
+        0.3 * jax.random.normal(jax.random.key(i + 1), (D,)) for i in range(order - 1)
     )
     solver = diffrax.ChainVerlet(coefficients=(1.0,) * (order - 1))
 
@@ -143,9 +143,7 @@ def test_chain_verlet_unit_jacobian(order):
 
     def flat_step(zflat):
         x = zflat[:D]
-        momenta = tuple(
-            zflat[D * (i + 1) : D * (i + 2)] for i in range(order - 1)
-        )
+        momenta = tuple(zflat[D * (i + 1) : D * (i + 2)] for i in range(order - 1))
         x1, m1 = _step_chain_verlet(solver, _logdensity, (x, momenta), h)
         return jnp.concatenate([x1, *m1])
 
@@ -220,8 +218,10 @@ def test_chain_langevin_acceptance_matches_energy_difference():
     top = alpha * momenta[-1] + jnp.sqrt(1 - alpha**2) * xi
     refreshed = (momenta[0], top)
     y_prop = _step_chain_verlet(
-        diffrax.ChainVerlet(coefficients=(1.0, 1.0)), _logdensity,
-        (x, refreshed), h,
+        diffrax.ChainVerlet(coefficients=(1.0, 1.0)),
+        _logdensity,
+        (x, refreshed),
+        h,
     )
     delta = _energy(y_prop, None) - _energy((x, refreshed), None)
     accept = jr.uniform(accept_key) < jnp.exp(jnp.minimum(0.0, -delta))

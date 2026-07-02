@@ -19,11 +19,14 @@ Old test -> new test mapping:
     -> test_mala_converges_on_linear_regression (ORIGINAL MALA version:
        STEP_SIZE=1e-5, 10000 steps, burn-in 3000, blackjax seed 19,
        dict-pytree state {"coefs", "log_scale"}, atol 1e-1)
-- tests/test_acceptance_overflow_gradient.py::test_acceptance_gradient_finite_past_exp_overflow
+- tests/test_acceptance_overflow_gradient.py
+    ::test_acceptance_gradient_finite_past_exp_overflow
     -> same name (original construction: TAU=0.5, x0=-100)
-- tests/test_acceptance_overflow_gradient.py::test_acceptance_gradient_finite_below_exp_overflow
+- tests/test_acceptance_overflow_gradient.py
+    ::test_acceptance_gradient_finite_below_exp_overflow
     -> same name (x0=-40)
-- tests/test_acceptance_overflow_gradient.py::test_acceptance_gradient_nonzero_below_saturation
+- tests/test_acceptance_overflow_gradient.py
+    ::test_acceptance_gradient_nonzero_below_saturation
     -> same name (x0=-0.2)
 
 **Randomness injection (not a mock).** blackjax's per-step randomness is
@@ -190,9 +193,7 @@ def _tree_allclose(a, b, rtol=RTOL, atol=ATOL):
 
 def _tree_max_abs_diff(a, b):
     return max(
-        jtu.tree_leaves(
-            jtu.tree_map(lambda x, y: float(jnp.max(jnp.abs(x - y))), a, b)
-        )
+        jtu.tree_leaves(jtu.tree_map(lambda x, y: float(jnp.max(jnp.abs(x - y))), a, b))
     )
 
 
@@ -350,21 +351,21 @@ def test_short_scan_matches_blackjax(name, log_pi, theta, x0):
             f"pos_diff={pos_diff}  lpd_diff={lpd_diff}  grad_diff={grad_diff}"
         )
 
-        assert _tree_allclose(our_pos, bj_state.position), (
-            f"position mismatch at step {step_idx} ({name})"
-        )
-        assert jnp.allclose(our_logdensity, bj_state.logdensity, rtol=RTOL, atol=ATOL), (
-            f"logdensity mismatch at step {step_idx} ({name})"
-        )
-        assert _tree_allclose(our_grad, bj_state.logdensity_grad), (
-            f"logdensity_grad mismatch at step {step_idx} ({name})"
-        )
+        assert _tree_allclose(
+            our_pos, bj_state.position
+        ), f"position mismatch at step {step_idx} ({name})"
+        assert jnp.allclose(
+            our_logdensity, bj_state.logdensity, rtol=RTOL, atol=ATOL
+        ), f"logdensity mismatch at step {step_idx} ({name})"
+        assert _tree_allclose(
+            our_grad, bj_state.logdensity_grad
+        ), f"logdensity_grad mismatch at step {step_idx} ({name})"
         assert jnp.allclose(
             our_accept_prob, bj_info.acceptance_rate, rtol=RTOL, atol=ATOL
         ), f"acceptance_rate mismatch at step {step_idx} ({name})"
-        assert our_accepted == bool(bj_info.is_accepted), (
-            f"is_accepted mismatch at step {step_idx} ({name})"
-        )
+        assert our_accepted == bool(
+            bj_info.is_accepted
+        ), f"is_accepted mismatch at step {step_idx} ({name})"
 
 
 # ---------------------------------------------------------------------------

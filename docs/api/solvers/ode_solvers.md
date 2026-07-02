@@ -120,6 +120,15 @@ In particular this includes Hamiltonian systems.
     selection:
         members: false
 
+::: diffrax.VelocityVerlet
+    selection:
+        members: false
+
+::: diffrax.ChainVerlet
+    selection:
+        members:
+            - __init__
+
 ---
 
 ### Reversible methods
