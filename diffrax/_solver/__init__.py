@@ -21,8 +21,10 @@ from .kvaerno3 import Kvaerno3 as Kvaerno3
 from .kvaerno4 import Kvaerno4 as Kvaerno4
 from .kvaerno5 import Kvaerno5 as Kvaerno5
 from .leapfrog_midpoint import LeapfrogMidpoint as LeapfrogMidpoint
+from .chain_verlet import ChainVerlet as ChainVerlet
 from .metropolis import (
     AbstractMetropolisSolver as AbstractMetropolisSolver,
+    ChainLangevin as ChainLangevin,
     GHMC as GHMC,
     MetropolisAdjusted as MetropolisAdjusted,
     MetropolisHastingsAdjusted as MetropolisHastingsAdjusted,

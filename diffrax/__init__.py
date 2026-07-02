@@ -88,6 +88,8 @@ from ._solver import (
     Euler as Euler,
     EulerHeun as EulerHeun,
     GeneralShARK as GeneralShARK,
+    ChainLangevin as ChainLangevin,
+    ChainVerlet as ChainVerlet,
     GHMC as GHMC,
     HalfSolver as HalfSolver,
     Heun as Heun,

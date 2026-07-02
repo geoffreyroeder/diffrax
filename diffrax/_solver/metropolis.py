@@ -503,3 +503,124 @@ GHMC.__init__.__doc__ = """**Arguments:**
     (HMC).
 - `key`: A PRNG key, used to seed the refresh and accept/reject randomness.
 """
+
+
+class ChainLangevin(AbstractMetropolisSolver):
+    r"""Metropolis-adjusted Langevin dynamics of any order $K \ge 2$.
+
+    The order-$K$ member of the Langevin hierarchy (Mou et al. 2021), on the
+    extended state $y = (x, (p_1, \ldots, p_{K-1}))$ with extended energy
+    $H(y) = -\log\tilde\pi(x) + \frac{1}{2}\sum_i |p_i|^2$, targetting the
+    extended Gibbs measure $\tilde\pi(x)\prod_i\mathcal{N}(p_i; 0, I)$. Noise
+    enters only the top block, as in the third-order dynamics of Mou et al.
+    Each step of size $h = t_1 - t_0$ performs, with
+    $\alpha = \exp(-\gamma h)$:
+
+    1. An exact Ornstein--Uhlenbeck refresh of the top momentum block:
+       $p_{K-1} \leftarrow \alpha p_{K-1} + \sqrt{1 - \alpha^2}\,\xi$,
+       $\xi \sim \mathcal{N}(0, I)$.
+    2. One step of the wrapped solver (typically [`diffrax.ChainVerlet`][]),
+       Metropolis-corrected with acceptance $\exp(\min(0, -\Delta H))$; on
+       rejection the state is $(x, F_p\,p)$ with $F$ the *alternating* flip
+       (odd momentum blocks change sign) — the flip under which the
+       palindromic chain step is reversible.
+
+    At $K = 2$ this is [`diffrax.GHMC`][]'s transition law in the one-shot
+    O--[BAB with MH] arrangement (a single full refresh per step, matching
+    the diffmala engines) rather than GHMC's palindromic OBABO arrangement
+    of two half-refreshes; the two are equal in law for the marginal chain.
+
+    See the module note in `diffrax/_solver/metropolis.py` for how the PRNG
+    key is threaded.
+
+    ??? cite "References"
+
+        ```bibtex
+        @article{mou2021highorder,
+            title={High-order {L}angevin diffusion yields an accelerated
+                   {MCMC} algorithm},
+            author={Mou, Wenlong and Ma, Yi-An and Wainwright, Martin J and
+                    Bartlett, Peter L and Jordan, Michael I},
+            journal={Journal of Machine Learning Research},
+            volume={22},
+            number={42},
+            pages={1--41},
+            year={2021},
+        }
+
+        @article{ma2015complete,
+            title={A complete recipe for stochastic gradient {MCMC}},
+            author={Ma, Yi-An and Chen, Tianqi and Fox, Emily},
+            journal={Advances in Neural Information Processing Systems},
+            volume={28},
+            year={2015},
+        }
+        ```
+    """
+
+    solver: AbstractSolver
+    energy_fn: Callable[[Y, Args], RealScalarLike]
+    gamma: RealScalarLike
+    key: PRNGKeyArray
+
+    def step(
+        self,
+        terms: PyTree[AbstractTerm],
+        t0: RealScalarLike,
+        t1: RealScalarLike,
+        y0: Y,
+        args: Args,
+        solver_state: _SolverState,
+        made_jump: BoolScalarLike,
+    ) -> tuple[Y, Optional[Y], DenseInfo, _SolverState, RESULTS]:
+        inner_state, key = solver_state
+        next_key, refresh_key, accept_key = jr.split(key, 3)
+
+        h = t1 - t0
+        alpha = jnp.exp(-self.gamma * h)
+        beta = jnp.sqrt(1 - alpha**2)
+
+        # O: exact OU refresh of the top momentum block.
+        x0, momenta = y0
+        xi = _normal_like(refresh_key, momenta[-1])
+        top = (alpha * momenta[-1] ** ω + beta * xi**ω).ω
+        momenta_refreshed = momenta[:-1] + (top,)
+        y_refreshed = (x0, momenta_refreshed)
+
+        # Palindromic chain step, Metropolis-corrected; alternating flip on
+        # rejection.
+        y1, y_error, _, inner_state, result = self.solver.step(
+            terms, t0, t1, y_refreshed, args, inner_state, made_jump
+        )
+        if y_error is not None:
+            raise NotImplementedError(
+                "`ChainLangevin` does not support inner solvers with error "
+                "estimates."
+            )
+        delta_energy = self.energy_fn(y1, args) - self.energy_fn(y_refreshed, args)
+        log_accept = _log_acceptance(-delta_energy)
+        u = jr.uniform(accept_key)
+        accept = u < jnp.exp(log_accept)
+        flipped_momenta = tuple(
+            jtu.tree_map(jnp.negative, p) if i % 2 == 0 else p
+            for i, p in enumerate(momenta_refreshed)
+        )
+        y_flipped = (x0, flipped_momenta)
+        y_next = _tree_where(accept, y1, y_flipped)
+
+        dense_info = dict(y0=y0, y1=y_next)
+        return y_next, None, dense_info, (inner_state, next_key), result
+
+
+ChainLangevin.__init__.__doc__ = """**Arguments:**
+
+- `solver`: The solver for the deterministic chain step, typically
+    [`diffrax.ChainVerlet`][] (whose term should hold the force
+    `f(t, x, args) = grad(log pi)(x)`).
+- `energy_fn`: The extended energy `H((x, momenta), args)`, e.g.
+    `-log pi(x) + 0.5 * sum_i |p_i|^2`.
+- `gamma`: The friction of the top-block Ornstein--Uhlenbeck refresh; each
+    step uses `alpha = exp(-gamma * h)`. `gamma = 0` gives fully persistent
+    momenta; `gamma -> infinity` gives full refresh of the top block.
+- `key`: A PRNG key, used to seed the refresh and accept/reject randomness.
+"""
