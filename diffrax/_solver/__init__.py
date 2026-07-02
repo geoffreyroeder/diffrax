@@ -21,6 +21,12 @@ from .kvaerno3 import Kvaerno3 as Kvaerno3
 from .kvaerno4 import Kvaerno4 as Kvaerno4
 from .kvaerno5 import Kvaerno5 as Kvaerno5
 from .leapfrog_midpoint import LeapfrogMidpoint as LeapfrogMidpoint
+from .metropolis import (
+    AbstractMetropolisSolver as AbstractMetropolisSolver,
+    GHMC as GHMC,
+    MetropolisAdjusted as MetropolisAdjusted,
+    MetropolisHastingsAdjusted as MetropolisHastingsAdjusted,
+)
 from .midpoint import Midpoint as Midpoint
 from .milstein import (
     ItoMilstein as ItoMilstein,
@@ -51,3 +57,4 @@ from .srk import (
     StochasticButcherTableau as StochasticButcherTableau,
 )
 from .tsit5 import Tsit5 as Tsit5
+from .velocity_verlet import VelocityVerlet as VelocityVerlet

@@ -73,6 +73,7 @@ from ._solver import (
     AbstractESDIRK as AbstractESDIRK,
     AbstractImplicitSolver as AbstractImplicitSolver,
     AbstractItoSolver as AbstractItoSolver,
+    AbstractMetropolisSolver as AbstractMetropolisSolver,
     AbstractRungeKutta as AbstractRungeKutta,
     AbstractSDIRK as AbstractSDIRK,
     AbstractSolver as AbstractSolver,
@@ -87,6 +88,7 @@ from ._solver import (
     Euler as Euler,
     EulerHeun as EulerHeun,
     GeneralShARK as GeneralShARK,
+    GHMC as GHMC,
     HalfSolver as HalfSolver,
     Heun as Heun,
     ImplicitEuler as ImplicitEuler,
@@ -98,6 +100,8 @@ from ._solver import (
     Kvaerno4 as Kvaerno4,
     Kvaerno5 as Kvaerno5,
     LeapfrogMidpoint as LeapfrogMidpoint,
+    MetropolisAdjusted as MetropolisAdjusted,
+    MetropolisHastingsAdjusted as MetropolisHastingsAdjusted,
     Midpoint as Midpoint,
     MultiButcherTableau as MultiButcherTableau,
     Ralston as Ralston,
@@ -112,6 +116,7 @@ from ._solver import (
     StochasticButcherTableau as StochasticButcherTableau,
     StratonovichMilstein as StratonovichMilstein,
     Tsit5 as Tsit5,
+    VelocityVerlet as VelocityVerlet,
 )
 from ._step_size_controller import (
     AbstractAdaptiveStepSizeController as AbstractAdaptiveStepSizeController,
