@@ -276,17 +276,16 @@ class MetropolisHastingsAdjusted(AbstractMetropolisSolver):
     logdensity_fn: Callable[[Y, Args], RealScalarLike]
     key: PRNGKeyArray
 
-    def step(
+    def _propose(
         self,
         terms: PyTree[AbstractTerm],
         t0: RealScalarLike,
         t1: RealScalarLike,
         y0: Y,
         args: Args,
-        solver_state: _SolverState,
+        inner_state,
         made_jump: BoolScalarLike,
-    ) -> tuple[Y, Optional[Y], DenseInfo, _SolverState, RESULTS]:
-        inner_state, key = solver_state
+    ):
         y1, y_error, dense_info, inner_state, result = self.solver.step(
             terms, t0, t1, y0, args, inner_state, made_jump
         )
@@ -304,6 +303,44 @@ class MetropolisHastingsAdjusted(AbstractMetropolisSolver):
         fwd = (y1**ω - y0**ω - h * grad0**ω).ω
         bwd = (y0**ω - y1**ω - h * grad1**ω).ω
         log_ratio = logp1 - logp0 + (_sum_squares(fwd) - _sum_squares(bwd)) / (4 * h)
+        return y1, dense_info, inner_state, result, log_ratio
+
+    def acceptance_probability(
+        self,
+        terms: PyTree[AbstractTerm],
+        t0: RealScalarLike,
+        t1: RealScalarLike,
+        y0: Y,
+        args: Args,
+    ) -> RealScalarLike:
+        """The Metropolis--Hastings acceptance probability
+        `exp(min(0, log rho))` of the step over `[t0, t1]` from `y0` -- the
+        exact quantity `step` evaluates before drawing its accept uniform
+        (same code path, via the same proposal computation). Differentiable,
+        including where the acceptance saturates at 1 (the log-domain clamp
+        gives derivative 0 there instead of the clip-after-exp NaN). Only
+        deterministic (and only equal to the acceptance used by a given
+        `step` call) if the proposal noise is carried by the terms, e.g. a
+        fixed Brownian path, since this re-makes the wrapped solver's step.
+        """
+        inner_state = self.solver.init(terms, t0, t1, y0, args)
+        *_, log_ratio = self._propose(terms, t0, t1, y0, args, inner_state, False)
+        return jnp.exp(_log_acceptance(log_ratio))
+
+    def step(
+        self,
+        terms: PyTree[AbstractTerm],
+        t0: RealScalarLike,
+        t1: RealScalarLike,
+        y0: Y,
+        args: Args,
+        solver_state: _SolverState,
+        made_jump: BoolScalarLike,
+    ) -> tuple[Y, Optional[Y], DenseInfo, _SolverState, RESULTS]:
+        inner_state, key = solver_state
+        y1, dense_info, inner_state, result, log_ratio = self._propose(
+            terms, t0, t1, y0, args, inner_state, made_jump
+        )
         log_accept = _log_acceptance(log_ratio)
 
         next_key, accept_key = jr.split(key)
