@@ -8,6 +8,7 @@ from .base import (
     HalfSolver as HalfSolver,
 )
 from .bosh3 import Bosh3 as Bosh3
+from .chain_verlet import ChainVerlet as ChainVerlet
 from .dopri5 import Dopri5 as Dopri5
 from .dopri8 import Dopri8 as Dopri8
 from .euler import Euler as Euler
@@ -21,6 +22,13 @@ from .kvaerno3 import Kvaerno3 as Kvaerno3
 from .kvaerno4 import Kvaerno4 as Kvaerno4
 from .kvaerno5 import Kvaerno5 as Kvaerno5
 from .leapfrog_midpoint import LeapfrogMidpoint as LeapfrogMidpoint
+from .metropolis import (
+    AbstractMetropolisSolver as AbstractMetropolisSolver,
+    ChainLangevin as ChainLangevin,
+    GHMC as GHMC,
+    MetropolisAdjusted as MetropolisAdjusted,
+    MetropolisHastingsAdjusted as MetropolisHastingsAdjusted,
+)
 from .midpoint import Midpoint as Midpoint
 from .milstein import (
     ItoMilstein as ItoMilstein,
@@ -51,3 +59,4 @@ from .srk import (
     StochasticButcherTableau as StochasticButcherTableau,
 )
 from .tsit5 import Tsit5 as Tsit5
+from .velocity_verlet import VelocityVerlet as VelocityVerlet
